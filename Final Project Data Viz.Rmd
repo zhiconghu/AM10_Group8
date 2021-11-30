@@ -1,0 +1,291 @@
+---
+title: "France accidents"
+author: "Estelle Tessaro"
+date: "11/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning = FALSE}
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(vroom)
+library(skimr)
+library(sf)
+library(dplyr)
+library(plyr)
+library(ggplot2)
+library(glmnet)
+```
+
+```{r}
+accidents <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\accidents.csv"))
+
+holidays <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\holidays1.csv"))
+
+location <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\location.csv"))
+
+persons <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\persons.csv"))
+
+vehicles <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\vehicles1.csv"))
+```
+
+```{r}
+# Join the data frames that do not have to be formatted first
+
+accidents1 <- accidents %>% 
+  left_join(location, by="acc_id") 
+
+accidents2 <- accidents1 %>% 
+  left_join(persons, by="acc_id") 
+
+accidents3 <- accidents2 %>% 
+  left_join(vehicles, by=c("acc_id", "veh_id")) 
+
+
+```
+
+
+```{r}
+# Format holidays data frame 
+
+date_1 <- format(holidays$date, format="%m-%d")
+
+holidays <- cbind(holidays, date_1)
+
+holidays <- subset(holidays, select = c(holiday, date_1))
+
+holidays <- holidays %>% distinct(date_1, .keep_all = TRUE)
+```
+
+
+```{r}
+# Create double digit values for all single digit month and date values
+
+accidents3$month[accidents3$month == "1"] <- "01"
+accidents3$month[accidents3$month == "2"] <- "02"
+accidents3$month[accidents3$month == "3"] <- "03"
+accidents3$month[accidents3$month == "4"] <- "04"
+accidents3$month[accidents3$month == "5"] <- "05"
+accidents3$month[accidents3$month == "6"] <- "06"
+accidents3$month[accidents3$month == "7"] <- "07"
+accidents3$month[accidents3$month == "8"] <- "08"
+accidents3$month[accidents3$month == "9"] <- "09"
+
+accidents3$day[accidents3$day == "1"] <- "01"
+accidents3$day[accidents3$day == "2"] <- "02"
+accidents3$day[accidents3$day == "3"] <- "03"
+accidents3$day[accidents3$day == "4"] <- "04"
+accidents3$day[accidents3$day == "5"] <- "05"
+accidents3$day[accidents3$day == "6"] <- "06"
+accidents3$day[accidents3$day == "7"] <- "07"
+accidents3$day[accidents3$day == "8"] <- "08"
+accidents3$day[accidents3$day == "9"] <- "09"
+
+```
+
+
+```{r}
+# Create new date column 
+
+date_1 <- paste(accidents3$month, accidents3$day, sep = "-")
+
+accidents3 <- cbind(accidents3, date_1)
+
+```
+
+
+
+```{r}
+# Drop unnecessary columns and filter data to only include rows corresponding to a driver
+
+accidents3 <- subset(accidents3, select = -c(gps, lat, long, dep, v1, v2, pr, pr1, senc, occutc))
+
+accidents3 <- accidents3[-c(1, 14, 28, 40)]
+
+#accidents3 <- accidents3[accidents3$person_role == 1,]
+
+accidents3$speed[accidents3$road_type == "1"] <- "130"
+accidents3$speed[accidents3$road_type == "2"] <- "110"
+accidents3$speed[accidents3$road_type == "3"] <- "110"
+accidents3$speed[accidents3$road_type == "4"] <- "80"
+accidents3$speed[accidents3$road_type == "5"] <- "50"
+accidents3$speed[accidents3$road_type == "6"] <- "30"
+accidents3$speed[accidents3$road_type == "9"] <- "70"
+```
+
+
+
+```{r}
+# Join holidays data frame with collective data frame
+
+accidents6 <- accidents3 %>% 
+  left_join(holidays, by= "date_1")
+
+```
+
+
+
+```{r}
+# Remove rows which contain NA values as glmnet cannot deal with NA values and drop columns unnecessary for Lasso computation
+
+accidents8 <- accidents6[!is.na(accidents6$severity),]
+
+accidents8 <- subset(accidents8, select = -c(adr, date_1, acc_id))
+
+accidents8$holiday[is.na(accidents8$holiday)] <- "No Holiday"
+
+accidents8 <- na.omit(accidents8)
+
+```
+
+
+
+```{r}
+# Convert day and month columns from character to numeric arguments
+
+accidents8$day <- as.factor(accidents8$day)
+
+accidents8$month <- as.factor(accidents8$month)
+
+accidents8$speed <- as.numeric(accidents8$speed)
+
+accidents8$year <- as.factor(accidents8$year)
+
+accidents8$light <- as.factor(accidents8$light)
+
+accidents8$agg <- as.factor(accidents8$agg)
+
+accidents8$int <- as.factor(accidents8$int)
+
+accidents8$weather <- as.factor(accidents8$weather)
+
+accidents8$col <- as.factor(accidents8$col)
+
+accidents8$road_type <- as.factor(accidents8$road_type)
+
+accidents8$traffic_flow <- as.factor(accidents8$traffic_flow)
+
+accidents8$lane_nr <- as.factor(accidents8$lane_nr)
+
+accidents8$bike_lane <- as.factor(accidents8$bike_lane)
+
+accidents8$road_steep <- as.factor(accidents8$road_steep)
+
+accidents8$plan <- as.factor(accidents8$plan)
+
+accidents8$surface <- as.factor(accidents8$surface)
+
+accidents8$road_loc <- as.factor(accidents8$road_loc)
+
+accidents8$accident_loc <- as.factor(accidents8$accident_loc)
+
+accidents8$person_loc <- as.factor(accidents8$person_loc)
+
+accidents8$person_role <- as.factor(accidents8$person_role)
+
+accidents8$gender <- as.factor(accidents8$gender)
+
+accidents8$trip_goal <- as.factor(accidents8$trip_goal)
+
+accidents8$ped_loc <- as.factor(accidents8$ped_loc)
+
+accidents8$ped_action <- as.factor(accidents8$ped_action)
+
+accidents8$ped_accomp <- as.factor(accidents8$ped_accomp)
+
+accidents8$vehicle_type <- as.factor(accidents8$vehicle_type)
+
+accidents8$obs <- as.factor(accidents8$obs)
+
+accidents8$obsm <- as.factor(accidents8$obsm)
+
+accidents8$choc <- as.factor(accidents8$choc)
+
+accidents8$manv <- as.factor(accidents8$manv)
+```
+
+
+
+```{r}
+# Declare x and y variables
+
+x_vars <- model.matrix(severity~. , accidents8)[,-1]
+y_var <- accidents8$severity
+lambda_seq <- 10^seq(2, -2, by = -.01)
+ 
+# Splitting the data into test and train
+
+set.seed(10086)
+train = sample(1:nrow(x_vars), nrow(x_vars)/2)
+x_test = (-train)
+y_test = y_var[x_test]
+ 
+cv_output <- cv.glmnet(x_vars[train,], y_var[train],
+                       alpha = 1, lambda = lambda_seq, 
+                       nfolds = 5)
+ 
+# identifying best lambda
+
+best_lam <- cv_output$lambda.min
+best_lam
+```
+
+
+
+
+```{r}
+# Use best lambda to construct best lasso model and execute prediction on testing set
+
+lasso_best <- glmnet(x_vars[train,], y_var[train], alpha = 1, lambda = best_lam)
+pred <- predict(lasso_best, s = best_lam, newx = x_vars[x_test,])
+
+# Obtain coefficients of Lasso regression
+
+coef(lasso_best)
+```
+
+
+
+
+```{r}
+# Create an array contains actual vs. predicted values
+
+final <- cbind(y_var[x_test], pred)
+
+# Convert to data frame and rename columns
+
+final <- as.data.frame(final)
+
+names(final)[names(final) == "V1"] <- "actual"
+
+names(final)[names(final) == "s1"] <- "predicted"
+
+# Checking the first six obs
+
+head(final)
+```
+
+
+```{r}
+# Calculate R^2 of the model
+
+actual <- final$actual
+preds <- final$predicted
+rss <- sum((preds - actual) ^ 2)
+tss <- sum((actual - mean(actual)) ^ 2)
+rsq <- 1 - rss/tss
+rsq
+
+```
+
+
+
+```{r}
+
+
+```
