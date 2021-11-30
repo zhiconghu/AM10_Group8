@@ -22,17 +22,57 @@ library(ggplot2)
 library(glmnet)
 ```
 
-```{r}
-accidents <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\accidents.csv"))
+```{r message=FALSE, warning=FALSE}
+accidents <- read_csv(here::here("data", "caracteristics.csv")) %>%
+  janitor::clean_names() %>%
+  dplyr::rename(acc_id = num_acc,
+                day = jour,
+                month = mois,
+                year = an,
+                time = hrmn,
+                light = lum,
+                weather = atm)
 
-holidays <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\holidays1.csv"))
+holidays <- read_csv(here::here("data", "holidays.csv")) %>%
+  janitor::clean_names() %>%
+  dplyr::rename(date = ds)
 
-location <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\location.csv"))
+location <- read_csv(here::here("data", "places.csv")) %>%
+  janitor::clean_names() %>%
+  dplyr::rename(acc_id = num_acc,
+                road_type = catr,
+                road_nr = voie,
+                traffic_flow = circ,
+                lane_nr = nbv,
+                bike_lane = vosp,
+                road_steep = prof,
+                surface = surf,
+                road_loc = infra,
+                accident_loc = situ,
+                near_school = env1)
 
-persons <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\persons.csv"))
+persons <- read_csv(here::here("data", "users.csv")) %>%
+  janitor::clean_names() %>%
+  dplyr::rename(acc_id = num_acc,
+                veh_id = num_veh,
+                person_loc = place,
+                person_role = catu,
+                severity = grav,
+                gender = sexe,
+                dob = an_nais,
+                trip_goal = trajet,
+                safety_equip = secu,
+                ped_loc = locp,
+                ped_action = actp,
+                ped_accomp = etatp)
 
-vehicles <- read_csv(here::here("C:\\Users\\zerva\\OneDrive\\Documents\\R Scipts LBS\\am10.mam2022\\Final Project\\vehicles1.csv"))
+vehicles <- read_csv(here::here("data", "vehicles.csv")) %>%
+  janitor::clean_names() %>%
+  dplyr::rename(acc_id = num_acc,
+                veh_id = num_veh,
+                vehicle_type = catv)
 ```
+
 
 ```{r}
 # Join the data frames that do not have to be formatted first
@@ -104,8 +144,6 @@ accidents3 <- cbind(accidents3, date_1)
 # Drop unnecessary columns and filter data to only include rows corresponding to a driver
 
 accidents3 <- subset(accidents3, select = -c(gps, lat, long, dep, v1, v2, pr, pr1, senc, occutc))
-
-accidents3 <- accidents3[-c(1, 14, 28, 40)]
 
 #accidents3 <- accidents3[accidents3$person_role == 1,]
 
@@ -286,6 +324,10 @@ rsq
 
 
 ```{r}
+fit <- lm(data = accidents8, formula = severity ~ time + col + person_role + gender + safety_equip +
+            vehicle_type + obs + obsm + choc + manv + near_school)
 
-
+summary(fit)
 ```
+
+
