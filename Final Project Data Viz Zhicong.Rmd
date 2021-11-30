@@ -331,3 +331,48 @@ summary(fit)
 ```
 
 
+# Data Visualization
+
+```{r}
+library(dplyr)
+library(tidyverse)
+
+# Only accidents in Paris
+accidents_plot <- accidents %>%
+  merge(persons, by = "acc_id") %>% 
+  merge(location, by = "acc_id")
+
+killed <- accidents_plot %>% 
+  filter(severity == 2)
+
+
+accidents_plot %>% 
+  drop_na(road_type) %>% 
+  dplyr::count(road_type) %>% 
+  mutate(road_type = factor(road_type, levels = c("1","2","3","4","5","6","9"))) %>% 
+  mutate(perc = n/sum(n)*100) %>% 
+  ggplot(aes(x = road_type, y = perc)) +
+    geom_col() +
+    labs(title = "All Accidents by Road Type")
+  
+killed %>% 
+  dplyr::count(road_type) %>% 
+  mutate(road_type = factor(road_type, levels = c("1","2","3","4","5","6","9"))) %>% 
+  mutate(perc = n/sum(n)*100) %>% 
+  ggplot(aes(x = road_type, y = perc)) +
+    geom_col() +
+    labs(title = "All Accidents with death by Road Type")
+
+```
+
+```{r}
+accidents %>% 
+  group_by(month) %>% 
+  dplyr::summarise(num_of_acc = dplyr::n()) %>% 
+  mutate(month = factor(month, levels = c("1","2","3","4","5","6","7","8","9","10","11","12"))) %>% 
+  ggplot(aes(x = month, y= num_of_acc, group =1)) +
+    geom_line() +
+    ylim(0,80000)
+```
+
+final$actual !=
