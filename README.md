@@ -11,7 +11,7 @@ of these crashes
 
 ## Source of data
 We obtained our data from Kaggle, which is a virtual repository with thousands of real-world data sets 
-available for free; the exact url address is below:
+available for free; the exact url address is:
 *https://www.kaggle.com/ahmedlahlou/accidents-in-france-from-2005-to-2016*
 
 ## Statistical techniques we will be using
