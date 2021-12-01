@@ -483,8 +483,8 @@ best_lam <- cv_output$lambda.min
 best_lam
 
 # Use best lambda to construct best lasso model and execute prediction on testing set
-ridge_best <- glmnet(x_vars[train,], y_var[train], alpha = 0, lambda = best_lam)
-pred <- predict(ridge_best, s = best_lam, newx = x_vars[x_test,])
+ridge_best <- glmnet(x_vars[train,], y_var[train], alpha = 0, lambda = best_lam, family = "binomial")
+pred <- predict(ridge_best, s = best_lam, newx = x_vars[x_test,], type = "class")
 
 # Obtain coefficients of ridge regression
 coef(ridge_best)
