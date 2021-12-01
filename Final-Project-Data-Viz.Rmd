@@ -151,7 +151,7 @@ accidents3 <- cbind(accidents3, date_1)
 
 For Factor variables, we changed columns that represented factor variables to factor format:
 
-```{r warning = FALSE, message =FALSE}
+```{r}
 # Drop unnecessary columns and filter data to only include rows corresponding to a driver
 accidents3 <- subset(accidents3, select = -c(gps, lat, long, dep, v1, v2, pr, pr1, senc, occutc))
 
@@ -274,7 +274,7 @@ As we can see from the plot, most accidents happen on the communal ways but most
 
 Next, we will investigate on which day of week has the highest percentage of accidents.
 
-```{r warning = FALSE, message =FALSE}
+```{r}
 age_accidents <- accidents3 %>%
   mutate(age = 2021-dob,
          year = 2000 + year,
@@ -396,7 +396,7 @@ As we can see from the above plot, there has been a consistent drop in frequency
 
 ## Age of drivers
 
-```{r warning = FALSE, message =FALSE}
+```{r,warning=FALSE}
 accidentsDriverAge <- accidents_graph %>% 
   filter(person_role ==1) %>% 
   filter(!is.na(year) && !is.na(dob)) %>% 
@@ -462,7 +462,7 @@ From the plot above, we can observe that drivers involved in accidents are mostl
 
 We were interested in the question "What are the important factors that affect the severity of an accident?". With this, we built a Ridge Regression model that predicts the probability of an accident of being fatal with other variables such as speed, weather, etc.
 
-```{r model_train, warning = FALSE, message =FALSE}
+```{r}
 # Declare x and y variables
 x_vars <- model.matrix(outcome~. , accidents8)[,-1]
 y_var <- accidents8$outcome
@@ -492,7 +492,7 @@ coef(ridge_best)
 
 We will then predict with our model in the training set to see our model's in-sample accuracy.
 
-```{r model_test, warning = FALSE, message =FALSE}
+```{r}
 # Create an array contains actual vs. predicted values
 final <- cbind(y_var[x_test], pred)
 
